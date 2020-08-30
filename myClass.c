@@ -66,6 +66,36 @@ PHP_FUNCTION(confirm_myClass_compiled)
 
 	RETURN_STR(strg);
 }
+
+PHP_FUNCTION(call_function)
+{
+		zval            *obj = NULL;
+		zval            *fun = NULL;
+		zval            *param = NULL;
+		zval            retval;
+		zval            args[1];
+
+#ifndef FAST_ZPP
+		/* Get function parameters and do error-checking. */
+		if (zend_parse_parameters(ZEND_NUM_ARGS(), "zzz", &obj, &fun, &param) == FAILURE) {
+	return;
+		}
+		#else
+		ZEND_PARSE_PARAMETERS_START(3, 3)
+		Z_PARAM_ZVAL(obj)
+		Z_PARAM_ZVAL(fun)
+		Z_PARAM_ZVAL(param)
+		ZEND_PARSE_PARAMETERS_END();
+		#endif
+php_printf("call ext call_function ");
+		args[0] = *param;
+		if (obj == NULL || Z_TYPE_P(obj) == IS_NULL) {
+			call_user_function_ex(EG(function_table), NULL, fun, &retval, 1, args, 0, NULL);
+		} else {
+			call_user_function_ex(EG(function_table), obj, fun, &retval, 1, args, 0, NULL);
+		}
+		RETURN_ZVAL(&retval, 0, 1);
+}
 /* }}} */
 /* The previous line is meant for vim and emacs, so it can correctly fold and
    unfold functions in source code. See the corresponding marks just before
@@ -148,6 +178,7 @@ const zend_function_entry myClass_functions[] = {
         PHP_ME(Person, __destruct,  NULL, ZEND_ACC_PUBLIC|ZEND_ACC_DTOR)
         PHP_ME(Person, getName,     NULL, ZEND_ACC_PUBLIC)
         PHP_ME(Person, setName,     arg_person_setname, ZEND_ACC_PUBLIC)
+        PHP_FE(call_function,NULL)
         PHP_FE_END
         //{NULL, NULL, NULL} /* Must be the last line in myClass_functions[] */
 };
